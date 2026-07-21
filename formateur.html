@@ -103,10 +103,15 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Tableau de bord — Examen Aspirant</h1>
+    <h1 id="dashTitle">Tableau de bord — Examen Aspirant</h1>
     <div class="sub">Section Médicale Seimei · Sunagakure</div>
     <div class="divider"></div>
   </header>
+
+  <div id="examTabs" style="display:none;text-align:center;margin-bottom:18px;">
+    <button class="btn ghost" id="tabAspirant" style="margin-right:10px;">Examen Aspirant</button>
+    <button class="btn ghost" id="tabAdepte">Examen Adepte</button>
+  </div>
 
   <div id="login" class="panel">
     <label for="pw">Mot de passe formateur</label>
@@ -173,13 +178,28 @@
 (function(){
   var el=function(id){return document.getElementById(id);};
   var rows=[],sortKey='created_at',sortDir=-1,sb=null;
+  var currentTable='exam_aspirant';
 
   function doLogin(){
     var pw=el('pw').value;
     var expected=(typeof FORMATEUR_PASSWORD!=='undefined')?FORMATEUR_PASSWORD:'seimei2024';
-    if(pw===expected){el('login').style.display='none';el('dash').style.display='block';init();load();}
+    if(pw===expected){
+      el('login').style.display='none';el('dash').style.display='block';
+      el('examTabs').style.display='block';
+      init();selectTab('exam_aspirant');
+    }
     else{el('loginErr').style.display='block';}
   }
+
+  function selectTab(table){
+    currentTable=table;
+    el('tabAspirant').classList.toggle('recue',table==='exam_aspirant');
+    el('tabAdepte').classList.toggle('recue',table==='exam_adepte');
+    el('dashTitle').textContent='Tableau de bord — Examen '+(table==='exam_aspirant'?'Aspirant':'Adepte');
+    load();
+  }
+  el('tabAspirant').addEventListener('click',function(){selectTab('exam_aspirant');});
+  el('tabAdepte').addEventListener('click',function(){selectTab('exam_adepte');});
   el('loginBtn').addEventListener('click',doLogin);
   el('pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
@@ -191,7 +211,7 @@
   function load(){
     if(!sb){el('tbody').innerHTML='<tr><td colspan="7" class="err">Configuration Supabase absente.</td></tr>';return;}
     el('tbody').innerHTML='<tr><td colspan="7" class="empty">Chargement...</td></tr>';
-    sb.from('exam_aspirant').select('*').order('created_at',{ascending:false}).then(function(res){
+    sb.from(currentTable).select('*').order('created_at',{ascending:false}).then(function(res){
       if(res.error){el('tbody').innerHTML='<tr><td colspan="7" class="err">'+esc(res.error.message)+'</td></tr>';return;}
       rows=res.data||[];render();
     });
@@ -275,7 +295,7 @@
     render();
     // persist to Supabase
     if(!sb)return;
-    sb.from('exam_aspirant').update({statut:status}).eq('id',id).then(function(res){
+    sb.from(currentTable).update({statut:status}).eq('id',id).then(function(res){
       if(res.error){
         console.error('Erreur update statut:',res.error.message);
         // revert on failure
@@ -367,7 +387,7 @@
     }).join('\n');
     var a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-    a.download='exam_aspirant_seimei.csv';a.click();
+    a.download=currentTable+'_seimei.csv';a.click();
   });
 })();
 </script>
