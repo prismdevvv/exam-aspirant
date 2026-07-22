@@ -125,7 +125,13 @@
   <div id="dash">
     <div class="panel" id="casCliniquesPanel">
       <h2 style="font-family:'Cinzel',serif;color:var(--gold);font-size:1.15rem;letter-spacing:.04em;margin-bottom:10px;">Cas Cliniques — Épreuve orale (Adepte)</h2>
-      <p class="muted" style="margin-bottom:14px;">Tire un cas au hasard parmi 20 scénarios avancés à énoncer oralement au candidat. Le corrigé attendu n'est visible que côté formateur.</p>
+      <p class="muted" style="margin-bottom:14px;">Sélectionne un apprenti ayant déjà terminé son test écrit, tire un cas au hasard, puis coche les éléments qu'il a correctement énoncés pour valider ou non son épreuve pratique.</p>
+      <div class="field" style="margin-bottom:14px;max-width:420px;">
+        <label for="caseCandidateSelect">Apprenti (test écrit terminé)</label>
+        <select id="caseCandidateSelect" style="width:100%;padding:10px 14px;font-family:inherit;font-size:1rem;background:rgba(20,12,4,.6);color:var(--sand-1);border:1px solid var(--ocre);border-radius:8px;outline:none;">
+          <option value="">— Aucun apprenti disponible —</option>
+        </select>
+      </div>
       <div style="text-align:center;margin-bottom:16px;">
         <button class="btn" id="drawCaseBtn">Tirer un cas au hasard</button>
       </div>
@@ -134,10 +140,17 @@
           <div style="font-family:'Cinzel',serif;color:var(--gold);font-weight:700;font-size:1.05rem;margin-bottom:8px;" id="caseTitre"></div>
           <div style="font-size:1.05rem;line-height:1.55;color:var(--parchment);" id="caseEnonce"></div>
         </div>
-        <details style="background:rgba(20,12,4,.35);border:1px solid rgba(181,113,43,.25);border-radius:10px;padding:12px 16px;">
-          <summary style="cursor:pointer;color:var(--sand-deep);font-family:'Cinzel',serif;">Éléments de correction attendus</summary>
-          <ul id="caseCorrige" style="margin-top:10px;padding-left:20px;line-height:1.6;color:var(--parchment);"></ul>
-        </details>
+        <div style="background:rgba(20,12,4,.35);border:1px solid rgba(181,113,43,.25);border-radius:10px;padding:12px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:var(--sand-deep);font-family:'Cinzel',serif;font-size:.95rem;">Éléments de correction attendus (barème)</span>
+            <span id="caseBaremeInfo" style="color:var(--gold);font-family:'Cinzel',serif;font-size:.9rem;"></span>
+          </div>
+          <ul id="caseCorrige" style="list-style:none;padding:0;line-height:1.7;color:var(--parchment);"></ul>
+          <div style="margin-top:14px;text-align:center;">
+            <button class="btn" id="validateCaseBtn">Valider le cas</button>
+          </div>
+          <div id="caseResult" style="display:none;margin-top:12px;padding:11px 12px;border-radius:8px;text-align:center;font-family:'Cinzel',serif;font-weight:700;"></div>
+        </div>
       </div>
     </div>
 
@@ -275,21 +288,97 @@
      corrige:["Reconnaître les limites du ninjutsu médical seul face à une infection installée","Nécessité d'une intervention chirurgicale (nettoyage profond, reprise de suture)","Transmission à un chirurgien pour évaluation","Le ninjutsu médical ne remplace pas toujours un geste chirurgical"]}
   ];
   var lastCaseIdx=-1;
+  var currentCaseTitre='';
+
+  // Barème : poids dérivé du contenu de chaque élément attendu
+  function pointsFor(text){
+    if(/jamais/i.test(text))return 3; // règle de sécurité critique
+    if(/transmission|transmet/i.test(text))return 1; // étape de clôture/procédure
+    return 2; // action standard attendue
+  }
 
   function drawCase(){
     var idx;
     do{ idx=Math.floor(Math.random()*clinicalCases.length); }while(clinicalCases.length>1&&idx===lastCaseIdx);
     lastCaseIdx=idx;
     var c=clinicalCases[idx];
+    currentCaseTitre=c.titre;
     el('caseTitre').textContent=c.titre;
     el('caseEnonce').textContent=c.enonce;
     var ul=el('caseCorrige'); ul.innerHTML='';
-    c.corrige.forEach(function(pt){
-      var li=document.createElement('li'); li.textContent=pt; ul.appendChild(li);
+    var total=0;
+    c.corrige.forEach(function(pt,i){
+      var pts=pointsFor(pt);
+      total+=pts;
+      var li=document.createElement('li');
+      li.style.marginBottom='6px';
+      var id='caseElem'+i;
+      li.innerHTML='<label style="cursor:pointer;display:flex;gap:8px;align-items:flex-start;">'+
+        '<input type="checkbox" data-points="'+pts+'" id="'+id+'" style="margin-top:4px;">'+
+        '<span>'+pt+' <em style="color:var(--sand-deep);font-style:italic;">('+pts+' pt'+(pts>1?'s':'')+')</em></span></label>';
+      ul.appendChild(li);
     });
+    var seuil=Math.ceil(total*0.6);
+    el('caseBaremeInfo').textContent='Barème : '+total+' pts · Réussite dès '+seuil+' pts (60%)';
+    el('caseResult').style.display='none';
     el('caseDisplay').style.display='block';
   }
   el('drawCaseBtn').addEventListener('click',drawCase);
+
+  function validateCase(){
+    var candidate=el('caseCandidateSelect').value;
+    if(!candidate){alert('Sélectionne d\'abord un apprenti.');return;}
+    if(!currentCaseTitre){alert('Tire d\'abord un cas.');return;}
+    var boxes=el('caseCorrige').querySelectorAll('input[type=checkbox]');
+    var score=0,total=0,elements=[];
+    boxes.forEach(function(b){
+      var pts=parseInt(b.dataset.points,10);
+      total+=pts;
+      if(b.checked){score+=pts;elements.push(b.nextElementSibling?b.nextElementSibling.textContent:'');}
+    });
+    var seuil=Math.ceil(total*0.6);
+    var reussi=score>=seuil;
+    var resEl=el('caseResult');
+    resEl.style.display='block';
+    resEl.textContent=(reussi?'✓ Épreuve réussie — ':'✗ Épreuve échouée — ')+candidate+' : '+score+' / '+total+' pts';
+    resEl.style.background=reussi?'rgba(61,220,132,.12)':'rgba(196,69,58,.12)';
+    resEl.style.color=reussi?'var(--chakra-glow)':'var(--blood-light)';
+    resEl.style.border='1px solid '+(reussi?'rgba(61,220,132,.4)':'rgba(196,69,58,.4)');
+
+    if(sb){
+      sb.from('cas_cliniques_resultats').insert([{
+        candidate:candidate,
+        exam_type:currentTable,
+        cas_titre:currentCaseTitre,
+        score:score,
+        total:total,
+        reussi:reussi,
+        elements_valides:JSON.stringify(elements)
+      }]).then(function(res){
+        if(res.error)console.error('Erreur enregistrement cas clinique:',res.error.message);
+      });
+    }
+  }
+  el('validateCaseBtn').addEventListener('click',validateCase);
+
+  function populateCandidates(){
+    var sel=el('caseCandidateSelect');
+    var current=sel.value;
+    var eligible=rows.filter(function(r){return r.finished&&!r.eliminated;});
+    var seen={},names=[];
+    eligible.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});
+    eligible.forEach(function(r){
+      if(!seen[r.name]){seen[r.name]=true;names.push(r.name);}
+    });
+    sel.innerHTML='';
+    if(names.length===0){
+      sel.innerHTML='<option value="">— Aucun apprenti disponible —</option>';
+      return;
+    }
+    sel.innerHTML='<option value="">— Choisir un apprenti —</option>'+
+      names.map(function(n){return '<option value="'+n.replace(/"/g,'&quot;')+'">'+n+'</option>';}).join('');
+    if(names.indexOf(current)>=0)sel.value=current;
+  }
 
   function selectTab(table){
     currentTable=table;
@@ -313,7 +402,7 @@
     el('tbody').innerHTML='<tr><td colspan="7" class="empty">Chargement...</td></tr>';
     sb.from(currentTable).select('*').order('created_at',{ascending:false}).then(function(res){
       if(res.error){el('tbody').innerHTML='<tr><td colspan="7" class="err">'+esc(res.error.message)+'</td></tr>';return;}
-      rows=res.data||[];render();
+      rows=res.data||[];render();populateCandidates();
     });
   }
 
