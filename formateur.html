@@ -123,6 +123,24 @@
   </div>
 
   <div id="dash">
+    <div class="panel" id="casCliniquesPanel">
+      <h2 style="font-family:'Cinzel',serif;color:var(--gold);font-size:1.15rem;letter-spacing:.04em;margin-bottom:10px;">Cas Cliniques — Épreuve orale (Adepte)</h2>
+      <p class="muted" style="margin-bottom:14px;">Tire un cas au hasard parmi 20 scénarios avancés à énoncer oralement au candidat. Le corrigé attendu n'est visible que côté formateur.</p>
+      <div style="text-align:center;margin-bottom:16px;">
+        <button class="btn" id="drawCaseBtn">Tirer un cas au hasard</button>
+      </div>
+      <div id="caseDisplay" style="display:none;">
+        <div style="background:rgba(20,12,4,.5);border:1px solid rgba(181,113,43,.4);border-radius:10px;padding:16px;margin-bottom:14px;">
+          <div style="font-family:'Cinzel',serif;color:var(--gold);font-weight:700;font-size:1.05rem;margin-bottom:8px;" id="caseTitre"></div>
+          <div style="font-size:1.05rem;line-height:1.55;color:var(--parchment);" id="caseEnonce"></div>
+        </div>
+        <details style="background:rgba(20,12,4,.35);border:1px solid rgba(181,113,43,.25);border-radius:10px;padding:12px 16px;">
+          <summary style="cursor:pointer;color:var(--sand-deep);font-family:'Cinzel',serif;">Éléments de correction attendus</summary>
+          <ul id="caseCorrige" style="margin-top:10px;padding-left:20px;line-height:1.6;color:var(--parchment);"></ul>
+        </details>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="summary" id="summary"></div>
       <div class="toolbar">
@@ -190,6 +208,88 @@
     }
     else{el('loginErr').style.display='block';}
   }
+
+  // ================================================================
+  // CAS CLINIQUES — ÉPREUVE ORALE ADEPTE (20 scénarios)
+  // ================================================================
+  var clinicalCases=[
+    {titre:"1. Fracture ouverte du tibia",
+     enonce:"Un genin revient de mission avec une fracture ouverte de la jambe : l'os est visible à travers une plaie sanglante, la jambe est déformée. Il saigne modérément et hurle de douleur.",
+     corrige:["Kaiseki Ken'shin pour évaluer l'étendue des dégâts","Ne JAMAIS remettre l'os en place","Couvrir la plaie sans comprimer l'os directement","Immobiliser sans faire bouger le membre","Paume Spirituelle possible en soutien, pas en solution définitive","Antiseptique + pansement stérile pour prévenir l'infection","Transmission urgente à un grade supérieur pour la chirurgie de réalignement"]},
+    {titre:"2. Artère fémorale sectionnée",
+     enonce:"Un shinobi présente une plaie profonde à la cuisse, le sang gicle par intermittence (jet pulsatile), signe d'une atteinte artérielle. Il est pâle et commence à perdre connaissance.",
+     corrige:["Compression directe forte et immédiate","Garrot à la racine du membre si la compression est insuffisante (jamais 5-10cm au-dessus de la plaie)","Transfert de Chakra pour stabiliser le patient","Position allongée, jambes légèrement surélevées","Noter l'heure de pose du garrot","Transmission urgente pour chirurgie vasculaire"]},
+    {titre:"3. Plaie soufflante au thorax",
+     enonce:"Un patient reçoit un shuriken dans la cage thoracique ; à chaque respiration on entend un sifflement au niveau de la plaie et sa respiration devient difficile.",
+     corrige:["Reconnaître une plaie soufflante (risque de pneumothorax sous tension)","Pansement à 3 côtés, jamais obstruer complètement la plaie","LVA si la respiration s'aggrave","Surveillance respiratoire continue","Transmission en urgence"]},
+    {titre:"4. Empoisonnement par lame enduite",
+     enonce:"Un shinobi est entaillé par une lame suspecte lors d'un combat. Quelques minutes plus tard, il ressent un engourdissement qui remonte progressivement des jambes vers le torse.",
+     corrige:["Reconnaître un poison paralysant (neurotoxique)","Kaiseki Ken'shin pour confirmer et identifier le poison avant tout traitement — ne jamais traiter à l'aveugle","Dokunuki no Jutsu (technique Adepte) pour extraire le poison","Surveiller la respiration, LVA/RCP si besoin","Transmettre si le cas dépasse ses compétences"]},
+    {titre:"5. Arrêt cardiaque en mission",
+     enonce:"Un coéquipier s'effondre soudainement, ne répond plus et ne respire plus normalement.",
+     corrige:["Sécuriser la zone avant d'intervenir","Vérifier réactivité puis respiration","Débuter la RCP : compressions de 5 à 6cm, 100-120/min, ratio 30:2","LVA avant les insufflations","Ne pas interrompre les compressions sauf nécessité absolue"]},
+    {titre:"6. Luxation de l'épaule au combat",
+     enonce:"Après une chute violente, un shinobi ne peut plus bouger son bras, l'épaule présente une déformation visible et une douleur intense.",
+     corrige:["Ne JAMAIS tenter de réduire soi-même sans formation adaptée (risque lésion nerveuse ou vasculaire)","Immobiliser l'articulation","Refroidir 15 à 20 minutes","Transmettre à un grade supérieur pour réduction encadrée"]},
+    {titre:"7. Hypothermie après une chute en rivière glacée",
+     enonce:"Un shinobi est retrouvé grelottant, confus, la peau froide, après être tombé dans une rivière lors d'une mission hivernale.",
+     corrige:["Éloigner immédiatement du sol et de l'humidité","Couverture thermique","Protéger du vent","Surveiller la température corporelle régulièrement","Ne jamais laisser en contact direct avec le sol","Ne pas réchauffer trop brutalement"]},
+    {titre:"8. Brûlure du 3e degré par technique de feu adverse",
+     enonce:"Un patient présente une peau noircie et cartonnée sur l'avant-bras suite à un jutsu de feu ; la zone centrale semble étonnamment peu douloureuse.",
+     corrige:["Reconnaître une brûlure du 3e degré (nerfs détruits = moins de douleur au centre, ce n'est pas bon signe)","Ne jamais percer ni appliquer de pommade","Couvrir stérilement sans serrer","Alerte immédiate, transfert vers un grade Expert"]},
+    {titre:"9. Fracture articulaire du genou",
+     enonce:"Après un choc violent au combat, le genou d'un shinobi est très gonflé, il ne peut plus le plier, et une douleur vive apparaît au moindre mouvement.",
+     corrige:["Suspicion de fracture articulaire (risque d'arthrose future, plus grave qu'une fracture classique)","Immobiliser sans forcer aucun mouvement","Refroidir 15 à 20 minutes","Transmission en urgence"]},
+    {titre:"10. Corps étranger profond après une embuscade",
+     enonce:"Un kunai s'est logé profondément dans l'abdomen d'un shinobi lors d'une embuscade ; il est conscient mais visiblement choqué.",
+     corrige:["Ne JAMAIS retirer l'objet empalé sur le terrain (risque d'hémorragie massive)","Stabiliser l'objet en place, ne pas le faire bouger","Kaiseki Ken'shin pour évaluer les dégâts internes","Transmission en urgence pour extraction chirurgicale contrôlée (grade Expert)"]},
+    {titre:"11. Décompensation psychologique en pleine mission",
+     enonce:"Un shinobi commence à paniquer, dissocie et ne réagit plus normalement après avoir subi un genjutsu violent pendant le combat.",
+     corrige:["Mettre en sécurité, retirer de la mission","Techniques d'ancrage et de respiration","Ne jamais le laisser seul","Réévaluer avant tout retour en service","Orientation vers un psychologue de la Seimei"]},
+    {titre:"12. Choc hémorragique après hémorragies multiples",
+     enonce:"Après plusieurs blessures cumulées, un shinobi devient pâle, confus, son pouls s'accélère mais faiblit.",
+     corrige:["Reconnaître le choc hémorragique","Allonger, jambes surélevées","Compression de toutes les sources de saignement actives","Transfert de Chakra pour soutenir le patient","Garder le patient conscient et le rassurer","Transmission urgente / transfusion si le groupe sanguin est connu"]},
+    {titre:"13. Empoisonnement par ingestion",
+     enonce:"Un shinobi a mangé de la nourriture suspecte lors d'une mission de repérage et présente des vomissements violents et des douleurs abdominales une heure après.",
+     corrige:["Charbon actif efficace si l'ingestion date de moins de 2 heures","Hydratation et surveillance","Kaiseki Ken'shin pour vérifier la gravité de l'intoxication","Transmission si aggravation des symptômes"]},
+    {titre:"14. Amputation traumatique partielle du pied",
+     enonce:"Un piège a partiellement sectionné le pied d'un shinobi ; les tissus restent attachés par un lambeau de peau, la douleur est intense et l'hémorragie continue.",
+     corrige:["Compression, garrot à la racine du membre si nécessaire","Ne JAMAIS achever la section sur le terrain","Stabiliser le lambeau, envelopper stérilement","Transmission Expert immédiate pour décision chirurgicale (réimplantation ou amputation complète — décision réservée au grade Expert minimum)","Surveiller l'état de choc"]},
+    {titre:"15. Fracture ouverte du bras avec hémorragie associée",
+     enonce:"Un genin heurte violemment un mur pendant un combat ; son avant-bras présente une plaie avec un fragment d'os visible, et le saignement est abondant.",
+     corrige:["Combiner gestion de la fracture ouverte (ne pas remettre l'os, couvrir sans comprimer l'os) et de l'hémorragie (compression autour de la plaie, jamais sur l'os)","Kaiseki Ken'shin pour évaluer précisément","Transmission urgente pour réalignement et suture chirurgicale"]},
+    {titre:"16. Entorse de grade 3 pendant une poursuite",
+     enonce:"Après une chute lors d'une poursuite, la cheville d'un shinobi présente une instabilité totale et une douleur qui, étrangement, diminue après un pic initial très intense.",
+     corrige:["Reconnaître une entorse de grade 3 (rupture complète ; la douleur diminue car les nerfs sont sectionnés — pas un bon signe)","Immobiliser, ne jamais faire porter le poids sur la cheville","Refroidir la zone","Transmission pour évaluation approfondie (fracture associée possible)"]},
+    {titre:"17. Empoisonnement cardiotoxique",
+     enonce:"Après une griffure d'une créature toxique rencontrée en mission, un shinobi ressent des palpitations, un rythme cardiaque irrégulier et un malaise croissant.",
+     corrige:["Reconnaître un poison cardiotoxique","Kaiseki Ken'shin pour diagnostiquer avant tout geste","Dokunuki no Jutsu (technique Adepte) pour extraire le poison","Surveillance rapprochée du pouls","Préparation à une réanimation en cas d'aggravation"]},
+    {titre:"18. Plaie par arme empoisonnée de contact",
+     enonce:"Un shinobi touche par mégarde une lame enduite d'une substance suspecte ; la peau de sa main rougit et commence à développer une nécrose superficielle qui s'étend lentement.",
+     corrige:["Reconnaître un poison de contact (cutané)","Nettoyer immédiatement la zone","Ne jamais toucher à mains nues (gants obligatoires, risque pour le soignant aussi)","Dokunuki no Jutsu si la substance a pénétré","Surveiller l'extension de la nécrose"]},
+    {titre:"19. Triage complexe lors d'une bataille de grande ampleur",
+     enonce:"Lors d'une bataille de grande ampleur, tu dois trier trois blessés en même temps : l'un saigne abondamment d'une plaie à la cuisse, un autre a une fracture fermée du bras et se plaint fort, le dernier est inconscient et ne respire plus.",
+     corrige:["Priorité absolue à ce qui menace la vie immédiatement : l'inconscient qui ne respire plus (LVA puis RCP)","Ensuite l'hémorragie active (compression / garrot)","La fracture fermée attend en dernier, elle n'engage pas le pronostic vital","Rappel du triage : vie avant fonction avant confort"]},
+    {titre:"20. Échec du ninjutsu médical seul sur une plaie infectée",
+     enonce:"Malgré un Kaiseki Ken'shin et une tentative de Paume Spirituelle, la plaie d'un shinobi continue de s'infecter et ne cicatrise pas correctement plusieurs jours après le combat.",
+     corrige:["Reconnaître les limites du ninjutsu médical seul face à une infection installée","Nécessité d'une intervention chirurgicale (nettoyage profond, reprise de suture)","Transmission à un chirurgien pour évaluation","Le ninjutsu médical ne remplace pas toujours un geste chirurgical"]}
+  ];
+  var lastCaseIdx=-1;
+
+  function drawCase(){
+    var idx;
+    do{ idx=Math.floor(Math.random()*clinicalCases.length); }while(clinicalCases.length>1&&idx===lastCaseIdx);
+    lastCaseIdx=idx;
+    var c=clinicalCases[idx];
+    el('caseTitre').textContent=c.titre;
+    el('caseEnonce').textContent=c.enonce;
+    var ul=el('caseCorrige'); ul.innerHTML='';
+    c.corrige.forEach(function(pt){
+      var li=document.createElement('li'); li.textContent=pt; ul.appendChild(li);
+    });
+    el('caseDisplay').style.display='block';
+  }
+  el('drawCaseBtn').addEventListener('click',drawCase);
 
   function selectTab(table){
     currentTable=table;
