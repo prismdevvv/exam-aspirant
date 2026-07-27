@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Examen de Fin de Formation — Seimei | Sunagakure</title>
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
+<style>
+  @import url('vendor/fonts.css');
+  :root{
+    --sand-1:#f4e4c1;--sand-deep:#c89b5e;--ocre:#b5712b;--ocre-deep:#8a4f1a;
+    --rust:#7a3b15;--parchment:#f0dfb8;--chakra:#6fcf97;--chakra-glow:#3ddc84;
+    --blood-light:#c4453a;--gold:#ffd86b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Cormorant Garamond',serif;color:var(--parchment);min-height:100vh;overflow-x:hidden;
+    background:radial-gradient(ellipse at 50% -10%,#5a3d1e 0%,transparent 55%),
+      radial-gradient(ellipse at 80% 110%,#4a3015 0%,transparent 50%),
+      linear-gradient(160deg,#2e1d0c 0%,#1c1106 60%,#140c04 100%);}
+  body::before{content:"";position:fixed;inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events:none;z-index:1;}
+  .wrap{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:30px 18px 80px;}
+  header{text-align:center;margin-bottom:24px;}
+  .formateur-btn{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .crest{width:70px;height:70px;margin:0 auto 12px;border:3px solid var(--chakra);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle,rgba(111,207,151,.25),transparent 70%);
+    box-shadow:0 0 26px rgba(111,207,151,.35),inset 0 0 18px rgba(0,0,0,.4);}
+  .crest svg{width:40px;height:40px;}
+  h1{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(1.5rem,4.6vw,2.4rem);
+    letter-spacing:.06em;color:var(--sand-1);
+    text-shadow:0 2px 0 var(--rust),0 0 30px rgba(111,207,151,.4);}
+  .sub{font-size:1.1rem;color:var(--sand-deep);font-style:italic;margin-top:5px;}
+  .divider{height:2px;width:60%;margin:16px auto 0;background:linear-gradient(90deg,transparent,var(--chakra),transparent);}
+  .panel{background:linear-gradient(160deg,rgba(240,223,184,.07),rgba(60,41,20,.15));
+    border:1px solid rgba(181,113,43,.45);border-radius:14px;padding:22px;margin-bottom:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);}
+  .panel h2{font-family:'Cinzel',serif;font-weight:700;color:var(--chakra);font-size:1.2rem;
+    letter-spacing:.05em;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+  .panel h2::before{content:"";width:8px;height:8px;background:var(--chakra);transform:rotate(45deg);}
+  p.lead{font-size:1.1rem;line-height:1.6;}
+  .hint{font-size:1rem;color:var(--sand-deep);font-style:italic;margin-top:8px;}
+  .prog-list{list-style:none;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;}
+  .prog-list li{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.03em;
+    padding:5px 12px;border-radius:16px;background:rgba(111,207,151,.1);
+    border:1px solid rgba(111,207,151,.35);color:var(--chakra);}
+  .field{margin:14px 0;}
+  label{display:block;font-size:1.05rem;color:var(--sand-deep);margin-bottom:6px;}
+  input[type=text]{width:100%;padding:13px 16px;font-family:inherit;font-size:1.15rem;
+    background:rgba(20,12,4,.6);color:var(--sand-1);border:1px solid var(--ocre);
+    border-radius:8px;outline:none;transition:.25s;}
+  input[type=text]:focus{border-color:var(--chakra);box-shadow:0 0 14px rgba(61,220,132,.3);}
+  .btn{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.05em;cursor:pointer;border:none;
+    border-radius:9px;padding:14px 26px;font-size:1rem;text-transform:uppercase;
+    background:linear-gradient(160deg,var(--ocre),var(--ocre-deep));color:#fff5e6;
+    box-shadow:0 6px 0 var(--rust),0 9px 18px rgba(0,0,0,.4);transition:transform .12s,box-shadow .12s;
+    text-decoration:none;display:inline-block;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--rust);}
+  .btn.ghost{background:transparent;border:1px solid var(--ocre);box-shadow:none;
+    color:var(--sand-1);font-size:.85rem;padding:8px 16px;}
+  .exam-bar{display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .exam-info{font-family:'Cinzel',serif;font-size:1rem;color:var(--sand-deep);}
+  .timer{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:700;color:var(--sand-1);
+    padding:6px 18px;border-radius:8px;background:rgba(20,12,4,.5);
+    border:1px solid rgba(181,113,43,.4);transition:.3s;}
+  .timer.warn{color:var(--gold);border-color:rgba(255,216,107,.5);}
+  .timer.danger{color:var(--blood-light);border-color:rgba(196,69,58,.6);
+    animation:pulse .6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .progress{height:6px;background:rgba(20,12,4,.5);border-radius:6px;overflow:hidden;
+    margin-bottom:18px;border:1px solid rgba(181,113,43,.3);}
+  .progress>div{height:100%;background:linear-gradient(90deg,var(--chakra),var(--chakra-glow));
+    width:0;transition:width .3s;}
+  .qtext{font-size:1.25rem;font-weight:600;color:var(--sand-1);margin-bottom:16px;line-height:1.4;}
+  .opt{display:block;width:100%;text-align:left;padding:13px 18px;margin-bottom:9px;
+    font-family:inherit;font-size:1.1rem;color:var(--parchment);
+    background:rgba(20,12,4,.45);border:1px solid rgba(181,113,43,.4);
+    border-radius:10px;cursor:pointer;transition:.18s;}
+  .opt:hover{background:rgba(111,207,151,.12);border-color:var(--chakra);}
+  .opt.sel{background:rgba(111,207,151,.22);border-color:var(--chakra-glow);color:var(--sand-1);}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:18px;}
+  #end{display:none;text-align:center;}
+  .end-icon{font-size:3rem;margin-bottom:10px;}
+  .end-title{font-family:'Cinzel',serif;font-size:1.8rem;font-weight:700;
+    color:var(--sand-1);margin-bottom:10px;}
+  .end-sub{font-size:1.15rem;color:var(--sand-deep);font-style:italic;margin-bottom:18px;line-height:1.5;}
+  .cloud-status{margin-top:12px;font-size:1rem;border-radius:8px;padding:11px 12px;
+    color:var(--sand-deep);border:1px solid rgba(181,113,43,.4);background:rgba(20,12,4,.4);}
+  .cloud-status.ok{color:var(--chakra);border-color:rgba(61,220,132,.45);background:rgba(61,220,132,.08);}
+  .cloud-status.warn{color:#ffcaa0;border-color:rgba(196,69,58,.5);background:rgba(196,69,58,.1);}
+  footer{text-align:center;margin-top:28px;color:var(--rust);font-style:italic;font-size:.95rem;}
+  footer .seal{color:var(--chakra);font-family:'Cinzel',serif;}
+.ico{width:1em;height:1em;vertical-align:-.14em;margin-right:.25em}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="formateur-btn">
+      <span style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="index.html" class="btn ghost">Examen Aspirant</a>
+        <a href="adepte.html" class="btn ghost">Examen Adepte</a>
+      </span>
+      <a href="formateur.html" class="btn ghost">Espace formateur</a>
+    </div>
+    <div class="crest">
+      <svg viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="30" stroke="#6fcf97" stroke-width="4"/>
+        <path d="M50 22 L58 44 L50 50 L42 44 Z" fill="#6fcf97"/>
+        <path d="M50 78 L42 56 L50 50 L58 56 Z" fill="#6fcf97"/>
+        <circle cx="50" cy="50" r="6" fill="#2e7d52"/>
+      </svg>
+    </div>
+    <h1>Examen de Fin de Formation</h1>
+    <div class="sub">Section Médicale Seimei · Sunagakure</div>
+    <div class="divider"></div>
+  </header>
+
+  <!-- INTRO -->
+  <div id="intro">
+    <div class="panel">
+      <h2>Consignes</h2>
+      <p class="lead">Cet examen valide la <strong>fin de ta formation initiale</strong> au sein de la Section Médicale Seimei. Il comporte <strong>15 questions</strong> tirées aléatoirement, portant sur l'ensemble des cours suivis pendant ta formation.</p>
+      <ul class="prog-list">
+        <li>Théorie Basique</li>
+        <li>Création d'élixir</li>
+        <li>Anatomie du corps</li>
+        <li>Cours pratique 1<sup>er</sup> soins</li>
+        <li>Chakra médical</li>
+        <li>Théorie technique médicale</li>
+      </ul>
+      <p class="hint" style="margin-top:12px;">Tu disposes de <strong>10 minutes</strong>. Le temps écoulé, l'examen se soumet automatiquement. Aucun résultat ne t'est communiqué sur place — ils sont transmis directement au formateur.</p>
+      <p class="hint" style="margin-top:8px;color:var(--blood-light);"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.5 20h19L12 3.5Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor" stroke="none"/></svg> Une seule tentative par session. Sois prêt avant de commencer.</p>
+    </div>
+    <div class="panel">
+      <h2>Identification</h2>
+      <div class="field">
+        <label for="nameInput">Nom de shinobi</label>
+        <input type="text" id="nameInput" placeholder="Ex : Artel Gaïa" maxlength="28" autocomplete="off">
+      </div>
+      <div style="margin-top:18px;text-align:center;">
+        <button class="btn" id="startBtn">Commencer l'examen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXAM -->
+  <div id="exam" style="display:none;">
+    <div class="exam-bar">
+      <span class="exam-info" id="counter">Question 1 / 15</span>
+      <span class="timer" id="timer">10:00</span>
+    </div>
+    <div class="progress"><div id="progBar"></div></div>
+    <div class="panel">
+      <div class="qtext" id="qText">—</div>
+      <div id="optList"></div>
+      <div class="nav">
+        <span></span>
+        <button class="btn" id="nextBtn" disabled>Suivant</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div id="end">
+    <div class="panel">
+      <div class="end-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h6"/></svg></div>
+      <div class="end-title">Examen soumis</div>
+      <div class="end-sub">Tes réponses ont été transmises au formateur.<br>Les résultats te seront communiqués par la Section Médicale Seimei.</div>
+      <div class="cloud-status" id="cloudStatus">Envoi en cours...</div>
+    </div>
+  </div>
+
+  <footer>Examen officiel · <span class="seal">Seimei</span> · Sunagakure</footer>
+</div>
+
+<script>
+(function(){
+  var el=function(id){return document.getElementById(id);};
+  function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+  // ================================================================
+  // POOL DE QUESTIONS — FIN DE FORMATION INITIALE
+  // ================================================================
+  var pool=[
+    // ── THÉORIE BASIQUE ──────────────────────────────────────────
+    {q:"Que signifie l'acronyme P.S.S. ?",
+     opts:["Protection, Soins et Stabilisation","Premiers Secours du Shinobi","Protocole de Secours et de Soins","Procédure de Santé et Sécurité"],c:1},
+    {q:"Quel est le grade d'entrée dans la Section Médicale Seimei ?",
+     opts:["Aspirant","Stagiaire","Adepte","Expert"],c:1},
+    {q:"Quel est l'ordre correct des grades de la Seimei ?",
+     opts:["Stagiaire, Aspirant, Adepte, Expert","Aspirant, Stagiaire, Expert, Adepte","Stagiaire, Adepte, Aspirant, Expert","Aspirant, Adepte, Stagiaire, Expert"],c:0},
+    {q:"Le grade d'Aspirant correspond au niveau ninja :",
+     opts:["Genin","Chunin","Konin","Iki"],c:1},
+    {q:"Quelle est la règle d'or quand une situation dépasse tes compétences ?",
+     opts:["Tenter quand même, on apprend en pratiquant","Stabiliser le patient et transmettre à un grade supérieur","Attendre sans rien faire","Renvoyer le patient chez lui"],c:1},
+    {q:"Les trois branches spécialisées de la Seimei sont :",
+     opts:["Offensive, Défensive, Médicale","Psychologique, Chirurgicale, Mortuaire","Combat, Diplomatie, Recherche","Scientifique, Militaire, Politique"],c:1},
+    {q:"À quoi sert un antiseptique ?",
+     opts:["À anesthésier la zone","À éliminer les bactéries et réduire le risque d'infection","À accélérer la coagulation","À faire baisser la fièvre"],c:1},
+    {q:"Face à un patient qui arrive blessé, quelle est la bonne démarche ?",
+     opts:["Utiliser le ninjutsu médical immédiatement","Évaluer d'abord la situation puis appliquer les gestes adaptés","Attendre l'arrivée d'un Expert sans rien faire","Administrer un antidouleur systématiquement"],c:1},
+    {q:"Pourquoi rassurer une victime blessée est-il important ?",
+     opts:["Pour respecter la tradition","Pour éviter un choc et faciliter la prise en charge","Cela n'a aucune utilité médicale","Pour gagner du temps"],c:1},
+    {q:"Qui est actuellement le gérant de la Section Médicale Seimei ?",
+     opts:["Artel Gaïa","Kaito Chiiketsu","Ilya Hanazora","Takeo Goda"],c:1},
+
+    // ── CRÉATION D'ÉLIXIR ────────────────────────────────────────
+    {q:"Combien de lavandes faut-il pour préparer un élixir de lavande ?",
+     opts:["3","5","8","10"],c:1},
+    {q:"L'élixir de lavande se prépare à partir de :",
+     opts:["5 lavandes","5 aloe vera","5 cactus","5 pavots"],c:0},
+    {q:"Avant toute préparation d'élixir, il faut impérativement :",
+     opts:["Attendre la nuit","Nettoyer et stériliser le matériel","Doubler les quantités","Chauffer à feu très vif"],c:1},
+    {q:"Que faire d'un élixir dont on ignore la composition exacte ?",
+     opts:["L'administrer quand même, au cas où","Ne jamais l'administrer à un patient","Le donner à demi-dose","Le mélanger à un autre élixir"],c:1},
+    {q:"Pourquoi le dosage d'un élixir doit-il être respecté précisément ?",
+     opts:["Uniquement pour économiser les ingrédients","Un mauvais dosage peut rendre le remède inefficace ou dangereux","Cela n'a pas d'importance sur un patient sain","Pour que la couleur soit correcte"],c:1},
+    {q:"Comment conserver correctement un élixir préparé ?",
+     opts:["En plein soleil","À l'abri de la lumière et de la chaleur","Au contact de l'air libre","Mélangé avec de l'eau du puits"],c:1},
+    {q:"Quelle plante est la spécialité médicale de Sunagakure ?",
+     opts:["Le saule blanc","L'aloe vera","La digitale pourpre","Le pavot"],c:1},
+    {q:"Le saule blanc (Salix alba) est à l'origine de quel remède ?",
+     opts:["L'aspirine","La morphine","La quinine","L'insuline"],c:0},
+
+    // ── ANATOMIE DU CORPS ────────────────────────────────────────
+    {q:"Quels sont les cinq organes vitaux ?",
+     opts:["Cœur, poumons, foie, reins, cerveau","Cœur, estomac, rate, vessie, peau","Poumons, intestins, foie, muscles, os","Cerveau, cœur, oreilles, yeux, mains"],c:0},
+    {q:"Où se situe le cœur dans la cage thoracique ?",
+     opts:["Légèrement à gauche","Exactement au centre","Légèrement à droite","Sous le diaphragme"],c:0},
+    {q:"Quel organe filtre le sang, neutralise les toxines et produit la bile ?",
+     opts:["Le rein","Le foie","La rate","L'estomac"],c:1},
+    {q:"À quoi servent les poumons ?",
+     opts:["À filtrer le sang","À assurer les échanges gazeux (oxygène / CO2)","À produire les globules rouges","À digérer les aliments"],c:1},
+    {q:"Une lésion du diaphragme empêche principalement :",
+     opts:["De marcher","De respirer normalement","De digérer","De parler"],c:1},
+    {q:"Où prend-on le pouls radial ?",
+     opts:["Au cou","Au poignet","À l'aine","Derrière le genou"],c:1},
+    {q:"L'artère fémorale se situe :",
+     opts:["Au cou","À l'aine et la cuisse","Au poignet","Dans le thorax"],c:1},
+    {q:"L'artère carotide irrigue :",
+     opts:["Le cerveau","La jambe","Le bras","Le foie"],c:0},
+    {q:"Parmi ces zones, laquelle est interdite sans supervision d'un grade supérieur ?",
+     opts:["L'avant-bras","Le cou et la gorge","Le mollet","La main"],c:1},
+    {q:"Quelle zone est considérée comme sûre pour une suture par un débutant ?",
+     opts:["Les tempes","L'avant-bras","Le creux axillaire","La colonne vertébrale"],c:1},
+    {q:"Une lésion de la colonne vertébrale risque de provoquer :",
+     opts:["Une paralysie","Une simple courbature","Une perte d'audition","Une infection cutanée"],c:0},
+    {q:"Une rupture de la rate provoque :",
+     opts:["Une hémorragie grave","Un simple hématome","Une fracture","Une brûlure interne"],c:0},
+
+    // ── COURS PRATIQUE 1ᵉʳ SOINS ─────────────────────────────────
+    {q:"Quel est le tout premier réflexe face à une victime au sol ?",
+     opts:["Commencer la réanimation","Vérifier que la zone est sûre","Poser un garrot","Donner à boire"],c:1},
+    {q:"Quel est le premier geste face à une hémorragie externe ?",
+     opts:["Poser immédiatement un garrot","Comprimer la plaie fortement et en continu","Rincer la plaie à l'eau","Allonger la victime et attendre"],c:1},
+    {q:"Si le tissu compressif est traversé par le sang, que faire ?",
+     opts:["Le retirer et en mettre un propre","Ajouter un tissu par-dessus sans retirer le premier","Arrêter de comprimer","Serrer un garrot sur la plaie"],c:1},
+    {q:"Selon la réforme des pratiques de soins, où pose-t-on un garrot ?",
+     opts:["5 à 10 cm au-dessus de la plaie","À la racine du membre, au plus proche du tronc","Directement sur la plaie","Sur l'articulation la plus proche"],c:1},
+    {q:"Une fois posé sur le terrain, un garrot :",
+     opts:["Doit être desserré toutes les 10 minutes","Ne doit jamais être desserré par le secouriste","Peut être retiré dès que le saignement cesse","Doit être déplacé régulièrement"],c:1},
+    {q:"Que faut-il toujours noter après la pose d'un garrot ?",
+     opts:["L'heure de pose","La couleur du sang","Le poids du patient","La marque du garrot"],c:0},
+    {q:"Dans quel cas met-on une victime en Position Latérale de Sécurité (PLS) ?",
+     opts:["Victime consciente qui saigne","Victime inconsciente qui respire","Victime en arrêt cardiaque","Victime avec une fracture du bras"],c:1},
+    {q:"Comment vérifie-t-on qu'une victime respire ?",
+     opts:["En la secouant fortement","En regardant, écoutant et sentant pendant environ 10 secondes","En prenant sa température","En lui parlant longuement"],c:1},
+    {q:"Quelle est la profondeur des compressions thoraciques lors d'une RCP ?",
+     opts:["1 à 2 cm","3 à 4 cm","5 à 6 cm","10 cm"],c:2},
+    {q:"À quel rythme réalise-t-on les compressions thoraciques ?",
+     opts:["40 à 60 par minute","60 à 80 par minute","100 à 120 par minute","150 à 180 par minute"],c:2},
+    {q:"Quel est le ratio compressions / insufflations chez une personne formée ?",
+     opts:["15 / 1","30 / 2","10 / 5","50 / 2"],c:1},
+    {q:"Quel est le premier geste face à une brûlure thermique ?",
+     opts:["Percer les cloques","Appliquer une pommade grasse","Refroidir sous l'eau tiède","Couvrir sans refroidir"],c:2},
+    {q:"Combien de temps refroidit-on une brûlure ?",
+     opts:["30 secondes","5 minutes","Environ 20 minutes","2 heures"],c:2},
+    {q:"Que ne faut-il JAMAIS faire sur une brûlure du 2ᵉ degré ?",
+     opts:["La refroidir","Percer les cloques","La couvrir sans serrer","Surveiller son évolution"],c:1},
+    {q:"Face à une fracture ouverte, que ne faut-il JAMAIS faire ?",
+     opts:["Couvrir la plaie","Remettre l'os en place","Immobiliser le membre","Alerter un grade supérieur"],c:1},
+    {q:"Face à une fracture fermée, le bon geste est :",
+     opts:["Masser la zone","Immobiliser sans faire bouger le membre","Faire marcher le patient","Tirer sur le membre pour le réaligner"],c:1},
+    {q:"Avec quels doigts prend-on le pouls d'un patient ?",
+     opts:["Le pouce seul","L'index et le majeur","L'auriculaire","La paume entière"],c:1},
+    {q:"Pourquoi ne prend-on jamais le pouls avec le pouce ?",
+     opts:["Il est trop large","Il possède son propre pouls et fausse la mesure","Il est moins sensible","C'est une simple habitude"],c:1},
+    {q:"Quelle est la fréquence cardiaque normale au repos ?",
+     opts:["30 à 50 bpm","60 à 100 bpm","110 à 140 bpm","150 à 180 bpm"],c:1},
+    {q:"Quelle est la température corporelle normale ?",
+     opts:["34 à 35 °C","36 à 37,5 °C","38 à 39 °C","39 à 40 °C"],c:1},
+    {q:"Quelle est la fréquence respiratoire normale au repos ?",
+     opts:["5 à 10 par minute","12 à 20 par minute","25 à 35 par minute","40 à 50 par minute"],c:1},
+    {q:"Face à plusieurs blessés, quelle est la priorité ?",
+     opts:["Le plus bruyant","Ce qui menace la vie en premier","Le premier arrivé","Le plus gradé"],c:1},
+
+    // ── CHAKRA MÉDICAL ───────────────────────────────────────────
+    {q:"Quel apprentissage est obligatoire pour tout médecin débutant ?",
+     opts:["Le Scalpel de Chakra","La Manipulation du Chakra Médicale","La Paume Mystique","Le Hone no Sasei"],c:1},
+    {q:"Quel est le point d'émission principal du chakra médical ?",
+     opts:["Les paumes des mains","Les pieds","Les épaules","Le dos"],c:0},
+    {q:"Quelle partie du corps offre la précision maximale pour les techniques fines ?",
+     opts:["Le bout des doigts","Le coude","Le genou","Le front"],c:0},
+    {q:"Combien de tenketsu (points de libération du chakra) compte le corps ?",
+     opts:["108","216","362","500"],c:2},
+    {q:"À quoi sert la Manipulation du Chakra Médicale ?",
+     opts:["À affiner son contrôle du chakra et gagner en précision","À attaquer un ennemi à distance","À voler du chakra","À créer des clones"],c:0},
+    {q:"Le Transfert de Chakra permet de :",
+     opts:["Voler le chakra d'un ennemi","Donner une partie de son chakra à une autre personne","Analyser les organes internes","Cautériser une plaie"],c:1},
+
+    // ── THÉORIE TECHNIQUE MÉDICALE ───────────────────────────────
+    {q:"À quoi sert le Kaiseki Kenshin ?",
+     opts:["À soigner les brûlures","À explorer l'intérieur du corps sans incision","À endormir un patient","À renforcer les muscles"],c:1},
+    {q:"Que permet de détecter le Kaiseki Kenshin ?",
+     opts:["Uniquement les plaies visibles","Fractures, hémorragies internes, corps étrangers et empoisonnements","Seulement les maladies mentales","Uniquement les brûlures"],c:1},
+    {q:"La Paume Spirituelle est utilisée pour :",
+     opts:["Les blessures superficielles (entailles, hématomes, petites brûlures)","Les fractures ouvertes","Les arrêts cardiaques","Les amputations"],c:0},
+    {q:"Quelles techniques correspondent au grade Aspirant ?",
+     opts:["Paume Mystique et Scalpel de Chakra","Manipulation du Chakra Médicale, Kaiseki Kenshin et Paume Spirituelle","Hone no Sasei et Inyushumetsu","Dokunoki no Jutsu uniquement"],c:1},
+    {q:"Le Dokunoki no Jutsu sert à :",
+     opts:["Extraire un poison du corps","Réparer un os brisé","Refermer une plaie","Analyser le chakra"],c:0},
+    {q:"Pourquoi l'Inyushumetsu est-elle réservée au dernier recours ?",
+     opts:["Elle est inefficace","Elle est extrêmement douloureuse pour le patient","Elle demande très peu de chakra","Elle ne fonctionne que la nuit"],c:1},
+    {q:"La Paume Mystique permet notamment de :",
+     opts:["Refermer les plaies et réparer les tissus mous","Extraire un poison","Souder un os brisé","Détecter un mensonge"],c:0},
+    {q:"Le Scalpel de Chakra permet de :",
+     opts:["Couper à l'intérieur du corps sans léser la peau","Recoudre une plaie sans fil","Endormir le patient","Réchauffer un patient"],c:0},
+    {q:"Que permet le Hone no Sasei ?",
+     opts:["De souder les cartilages et microfractures osseuses","De ressouder n'importe quel os brisé","De remplacer une opération chirurgicale","De régénérer un membre amputé"],c:0},
+    {q:"Quelle technique demande un contact physique direct avec le patient ?",
+     opts:["Le Transfert de Chakra","Le Kaiseki Kenshin à distance","Aucune","Le Scalpel de Chakra uniquement"],c:0}
+  ];
+
+  // ================================================================
+  var NB_Q=15, TIMER_SEC=600;
+  var st={name:"",seq:[],idx:0,answers:[],selected:-1,timerId:null,timeLeft:TIMER_SEC,done:false};
+
+  function startExam(){
+    var nm=el('nameInput').value.trim();
+    if(!nm){el('nameInput').style.borderColor='var(--blood-light)';
+      setTimeout(function(){el('nameInput').style.borderColor='';},900);return;}
+    st.name=nm;
+    st.idx=0; st.answers=new Array(NB_Q).fill(-1); st.done=false;
+    buildSeq();
+    el('intro').style.display='none';
+    el('exam').style.display='block';
+    renderQ(); startTimer();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function buildSeq(){
+    var p=shuffle(pool).slice(0,NB_Q);
+    st.seq=p.map(function(q){
+      var idxs=shuffle(q.opts.map(function(_,i){return i;}));
+      return {qText:q.q,opts:idxs.map(function(i){return q.opts[i];}),correct:idxs.indexOf(q.c)};
+    });
+  }
+
+  function startTimer(){
+    st.timeLeft=TIMER_SEC; renderTimer();
+    st.timerId=setInterval(function(){
+      st.timeLeft--;renderTimer();
+      if(st.timeLeft<=0){stopTimer();submitExam();}
+    },1000);
+  }
+  function stopTimer(){if(st.timerId){clearInterval(st.timerId);st.timerId=null;}}
+  function renderTimer(){
+    var m=Math.floor(st.timeLeft/60),s=st.timeLeft%60;
+    var t=el('timer');
+    t.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+    t.className='timer';
+    if(st.timeLeft<=60)t.className='timer danger';
+    else if(st.timeLeft<=120)t.className='timer warn';
+  }
+
+  function renderQ(){
+    var item=st.seq[st.idx];
+    st.selected=st.answers[st.idx];
+    el('progBar').style.width=Math.round((st.idx/NB_Q)*100)+'%';
+    el('counter').textContent='Question '+(st.idx+1)+' / '+NB_Q;
+    el('qText').textContent=item.qText;
+    var list=el('optList');list.innerHTML='';
+    item.opts.forEach(function(o,i){
+      var b=document.createElement('button');
+      b.className='opt'+(st.selected===i?' sel':'');b.textContent=o;
+      b.addEventListener('click',function(){selectOpt(i);});
+      list.appendChild(b);
+    });
+    el('nextBtn').textContent=(st.idx===NB_Q-1)?'Soumettre':'Suivant';
+    el('nextBtn').disabled=(st.selected<0);
+  }
+
+  function selectOpt(i){
+    if(st.done)return;
+    st.selected=i;st.answers[st.idx]=i;
+    el('optList').querySelectorAll('.opt').forEach(function(b,j){b.classList.toggle('sel',j===i);});
+    el('nextBtn').disabled=false;
+  }
+
+  function nextQ(){
+    if(st.selected<0)return;
+    if(st.idx===NB_Q-1){stopTimer();submitExam();return;}
+    st.idx++;renderQ();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function submitExam(){
+    if(st.done)return; st.done=true; stopTimer();
+    var correct=0;
+    var details=st.seq.map(function(item,i){
+      var chosen=st.answers[i];
+      var good=(chosen===item.correct);
+      if(good)correct++;
+      return {q:item.qText,chosen:chosen>=0?item.opts[chosen]:'(sans réponse)',
+        correct_answer:item.opts[item.correct],ok:good};
+    });
+    var score=Math.round((correct/NB_Q)*100);
+    el('exam').style.display='none';el('end').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+    saveToCloud({name:st.name,score:score,correct:correct,total:NB_Q,
+      time_left:st.timeLeft,finished:true,eliminated:false,
+      answers:JSON.stringify(details),
+      statut:correct>=10?'recue':'recale'});
+  }
+
+  function saveToCloud(row){
+    var note=el('cloudStatus');
+    var URL=(typeof SUPABASE_URL!=='undefined')?SUPABASE_URL:null;
+    var KEY=(typeof SUPABASE_KEY!=='undefined')?SUPABASE_KEY:null;
+    var icoWarn='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.5 20h19L12 3.5Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor" stroke="none"/></svg>';
+    var icoOk='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+    if(!URL||!KEY){note.innerHTML=icoWarn+' Configuration absente.';note.className='cloud-status warn';return;}
+    note.textContent='Envoi en cours...';note.className='cloud-status';
+    try{
+      var sb=window.supabase.createClient(URL,KEY);
+      sb.from('exam_formation').insert([row]).then(function(res){
+        if(res.error){note.innerHTML=icoWarn+' Erreur : '+res.error.message;note.className='cloud-status warn';}
+        else{note.innerHTML=icoOk+' Examen transmis à la Section Médicale.';note.className='cloud-status ok';}
+      },function(){note.innerHTML=icoWarn+' Erreur réseau.';note.className='cloud-status warn';});
+    }catch(e){note.innerHTML=icoWarn+' Erreur.';note.className='cloud-status warn';}
+  }
+
+  el('startBtn').addEventListener('click',startExam);
+  el('nameInput').addEventListener('keydown',function(e){if(e.key==='Enter')startExam();});
+  el('nextBtn').addEventListener('click',nextQ);
+})();
+</script>
+</body>
+</html>

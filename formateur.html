@@ -109,6 +109,7 @@
   </header>
 
   <div id="examTabs" style="display:none;text-align:center;margin-bottom:18px;">
+    <button class="btn ghost" id="tabFormation" style="margin-right:10px;">Fin de Formation</button>
     <button class="btn ghost" id="tabAspirant" style="margin-right:10px;">Examen Aspirant</button>
     <button class="btn ghost" id="tabAdepte">Examen Adepte</button>
   </div>
@@ -380,13 +381,16 @@
     if(names.indexOf(current)>=0)sel.value=current;
   }
 
+  var TAB_TITLES={exam_formation:'Fin de Formation',exam_aspirant:'Aspirant',exam_adepte:'Adepte'};
   function selectTab(table){
     currentTable=table;
+    el('tabFormation').classList.toggle('recue',table==='exam_formation');
     el('tabAspirant').classList.toggle('recue',table==='exam_aspirant');
     el('tabAdepte').classList.toggle('recue',table==='exam_adepte');
-    el('dashTitle').textContent='Tableau de bord — Examen '+(table==='exam_aspirant'?'Aspirant':'Adepte');
+    el('dashTitle').textContent='Tableau de bord — Examen '+TAB_TITLES[table];
     load();
   }
+  el('tabFormation').addEventListener('click',function(){selectTab('exam_formation');});
   el('tabAspirant').addEventListener('click',function(){selectTab('exam_aspirant');});
   el('tabAdepte').addEventListener('click',function(){selectTab('exam_adepte');});
   el('loginBtn').addEventListener('click',doLogin);
